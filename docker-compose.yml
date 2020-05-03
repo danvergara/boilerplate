@@ -1,9 +1,5 @@
 version: "3.7"
 
-volumes:
-  boilerplatevolume:
-    name: boilerplate-volume
-
 networks:
   boilerplatenetwork:
 
@@ -15,9 +11,6 @@ services:
       - .env
     ports:
       - "${POSTGRES_PORT}:${POSTGRES_PORT}"
-    volumes:
-      - boilerplatevolume:/var/lib/postgresql/data
-      - ./db/scripts:/docker-entrypoint-initdb.d/
     networks:
       - boilerplatenetwork
   boilerplate_api:
@@ -27,7 +20,8 @@ services:
     depends_on:
       - pg
     volumes:
-      - ./:/app
+      - ./:/cmd
+      - ./:/pkg
     ports:
       - 7777:7777
     networks:
