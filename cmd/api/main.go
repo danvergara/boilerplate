@@ -1,25 +1,44 @@
 package main
 
 import (
-	"log"
-
-	"githbu.com/danvergara/boilerplate/pkg/application"
+	"github.com/danvergara/boilerplate/cmd/api/router"
+	"github.com/danvergara/boilerplate/pkg/application"
+	"github.com/danvergara/boilerplate/pkg/exithandler"
+	"github.com/danvergara/boilerplate/pkg/logger"
+	"github.com/danvergara/boilerplate/pkg/server"
 	"github.com/joho/godotenv"
 )
 
 func main() {
 	if err := godotenv.Load(); err != nil {
-		log.Println("failed to load env vars")
+		logger.Info.Println("failed to load env vars")
 	}
 
 	app, err := application.Get()
 	if err != nil {
-		log.Fatal(err.Error())
+		logger.Error.Fatal(err.Error())
 	}
 
-  exithandler.Init(func() {
-    if err := app.DB.Close(); err != nil {
-      log.Println(err.Error())
-    }
-  })
+	srv := server.
+		Get().
+		WithAddr(app.Cfg.GetAPIPort()).
+		WithRouter(router.Get(app)).
+		WithErrLogger(logger.Error)
+
+	go func() {
+		logger.Info.Printf("starting server at %s", app.Cfg.GetAPIPort())
+		if err := srv.Start(); err != nil {
+			logger.Error.Fatal(err.Error())
+		}
+	}()
+
+	exithandler.Init(func() {
+		if err := app.DB.Close(); err != nil {
+			logger.Error.Println(err.Error())
+		}
+
+		if err := app.DB.Close(); err != nil {
+			logger.Error.Println(err.Error())
+		}
+	})
 }
